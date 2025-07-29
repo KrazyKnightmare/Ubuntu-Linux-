@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Update system to the latest version
+echo "Can I please update your Ubuntu system to the latest version?"
+sudo apt update && sudo apt upgrade -y
+echo "System has been updated."
+
+# Check and list all files and directories in the root directory, logging locations
+echo "Can I please check all files and directories in your system?"
+echo "Listing all files and directories under /..."
+
+# Get the list of all files and directories
+find / -type f -exec ls -l {} \; > /home/$(whoami)/file_list.txt
+
+# Log the files and directories
+echo "The files and directories have been saved to /home/$(whoami)/file_list.txt."
+
+# Fetch EC2 instance metadata (if on EC2)
+if [ -f /sys/hypervisor/uuid ]; then
+    echo "This script is running on an EC2 instance."
+    
+    # Get the EC2 instance metadata
+    instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+    public_ip=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+    region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/[a-z]$//')
+    
+    echo "EC2 Instance ID: $instance_id"
+    echo "Public IP: $public_ip"
+    echo "Region: $region"
+    
+    echo "EC2 instance metadata has been logged."
+
+    # Log the EC2 instance details
+    echo "EC2 Instance ID: $instance_id" > /home/$(whoami)/ec2_instance_info.txt
+    echo "Public IP: $public_ip" >> /home/$(whoami)/ec2_instance_info.txt
+    echo "Region: $region" >> /home/$(whoami)/ec2_instance_info.txt
+else
+    echo "This is not an EC2 instance."
+fi
+
+# Track the last power user who used sudo
+echo "Can I please check the last power user who had sudo privileges?"
+
+# Get the last user who used sudo from the auth logs
+last_power_user=$(grep 'sudo:' /var/log/auth.log | tail -n 1)
+
+echo "The last power user who used sudo: $last_power_user"
+
+# Save the user details to a log file
+echo "Last power user who used sudo: $last_power_user" > /home/$(whoami)/last_power_user.txt
+
+# Inform the user
+echo "Information about system files, EC2 instance, and last power user has been recorded."
+echo "Check the following files for details:"
+echo "/home/$(whoami)/file_list.txt"
+echo "/home/$(whoami)/ec2_instance_info.txt"
+echo "/home/$(whoami)/last_power_user.txt"
+
+# Display a friendly message
+echo "Thank you for using the script! Have a great day!"
